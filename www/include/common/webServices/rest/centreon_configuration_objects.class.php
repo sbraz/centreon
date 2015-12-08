@@ -74,13 +74,30 @@ class CentreonConfigurationObjects extends CentreonWebService
             throw new RestBadRequestException("Bad parameters target");
         }
         
+        // Get module targeted
+        $module = '';
+        if (isset($this->arguments['module'])) {
+            $module .= $this->arguments['module'];
+        } else {
+            $module .= 'Centreon';
+        }
+        
         // 
         $defaultValuesParameters = array();
-        $targetedFile = _CENTREON_PATH_ . "/www/class/centreon$target.class.php";
-        if (file_exists($targetedFile)) {
-            require_once $targetedFile;
-            $calledClass = 'Centreon' . $target;
-            $defaultValuesParameters = $calledClass::getDefaultValuesParameters($field);
+        
+        if ($module === 'Centreon') {
+            $targetedFile = _CENTREON_PATH_ . "/www/class/centreon$target.class.php";
+            if (file_exists($targetedFile)) {
+                require_once $targetedFile;
+                $calledClass = 'Centreon' . $target;
+                $defaultValuesParameters = $calledClass::getDefaultValuesParameters($field);
+            }
+        } else {
+            $webServiceLoaderClass = _CENTREON_PATH_ . "/www/modules/$module/webServices/webServiceLoader.class.php";
+            if (file_exists($webServiceLoaderClass)) {
+                require_once $webServiceLoaderClass;
+                $defaultValuesParameters = WebServiceLoader::load($target, $field);
+            }
         }
         
         // 
